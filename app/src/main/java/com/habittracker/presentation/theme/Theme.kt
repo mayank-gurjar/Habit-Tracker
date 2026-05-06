@@ -4,28 +4,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val AestheticDarkColorScheme = darkColorScheme(
-    primary = AestheticPrimary,
-    onPrimary = AestheticOnPrimary,
-    primaryContainer = AestheticPrimaryContainer,
-    onPrimaryContainer = AestheticOnPrimaryContainer,
-    secondary = AestheticSecondary,
-    onSecondary = AestheticOnSecondary,
-    background = AestheticBackground,
-    onBackground = AestheticTextPrimary,
-    surface = AestheticSurface,
-    onSurface = AestheticTextPrimary,
-    surfaceVariant = AestheticSurfaceVariant,
-    onSurfaceVariant = AestheticTextSecondary
+private val SportyDarkColorScheme = darkColorScheme(
+    primary = SportyPrimary,
+    onPrimary = SportyOnPrimary,
+    primaryContainer = SportyPrimaryContainer,
+    onPrimaryContainer = SportyOnPrimaryContainer,
+    secondary = SportySecondary,
+    onSecondary = SportyOnSecondary,
+    background = SportyBackground,
+    onBackground = SportyTextPrimary,
+    surface = SportySurface,
+    onSurface = SportyTextPrimary,
+    surfaceVariant = SportySurfaceVariant,
+    onSurfaceVariant = SportyTextSecondary
 )
 
 @Composable
 fun HabitTrackerTheme(
     content: @Composable () -> Unit
 ) {
-    // We force the Aesthetic Dark Theme for a premium look
+    // We force the Sporty Dark Theme for a premium classic look
     MaterialTheme(
-        colorScheme = AestheticDarkColorScheme,
+        colorScheme = SportyDarkColorScheme,
         typography = AppTypography,
         content = content
     )

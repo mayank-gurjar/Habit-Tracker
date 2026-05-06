@@ -94,7 +94,7 @@ fun HeaderSection(uiState: DashboardUiState) {
     ) {
         Column {
             Text(
-                text = "Hello, ${uiState.userName} \uD83D\uDC4B",
+                text = "Hello, ${uiState.userName}",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -243,11 +243,6 @@ fun EmptyState() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "\uD83D\uDE80",
-            style = MaterialTheme.typography.displayLarge
-        )
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "No habits yet",
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
