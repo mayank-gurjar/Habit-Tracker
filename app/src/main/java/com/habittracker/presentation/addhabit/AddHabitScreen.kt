@@ -11,13 +11,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,6 +34,19 @@ fun AddHabitScreen(
     var selectedColor by remember { mutableStateOf("#4F46E5") }
     var isTrackerEnabled by remember { mutableStateOf(false) }
 
+    var showAiDialog by remember { mutableStateOf(false) }
+    var aiGoalText by remember { mutableStateOf("") }
+    val isGenerating by viewModel.isGenerating.collectAsState()
+    val aiError by viewModel.aiError.collectAsState()
+
+    val context = LocalContext.current
+    LaunchedEffect(aiError) {
+        if (aiError != null) {
+            Toast.makeText(context, aiError, Toast.LENGTH_LONG).show()
+            viewModel.clearAiError()
+        }
+    }
+
     val colors = listOf("#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899")
     val emojis = listOf("📚", "🏃‍♂️", "💧", "🧘‍♀️", "🎸", "💻", "🎨", "🥗", "💪", "🛌")
 
@@ -41,6 +57,13 @@ fun AddHabitScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    TextButton(onClick = { showAiDialog = true }) {
+                        Icon(Icons.Default.Star, contentDescription = "AI", modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Ask AI")
                     }
                 }
             )
@@ -134,6 +157,48 @@ fun AddHabitScreen(
                     onCheckedChange = { isTrackerEnabled = it }
                 )
             }
+        }
+
+        if (showAiDialog) {
+            AlertDialog(
+                onDismissRequest = { if (!isGenerating) showAiDialog = false },
+                title = { Text("Smart Habit Assistant") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Describe your goal and I'll generate a 3-habit plan for you.")
+                        OutlinedTextField(
+                            value = aiGoalText,
+                            onValueChange = { aiGoalText = it },
+                            placeholder = { Text("e.g., I want to get fit") },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isGenerating
+                        )
+                        if (isGenerating) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (aiGoalText.isNotBlank()) {
+                                viewModel.generateHabitsFromGoal(aiGoalText, onNavigateBack)
+                            }
+                        },
+                        enabled = aiGoalText.isNotBlank() && !isGenerating
+                    ) {
+                        Text("Generate Plan")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showAiDialog = false },
+                        enabled = !isGenerating
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
