@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+import com.google.ai.client.generativeai.GenerativeModel
+import com.habittracker.BuildConfig
 
 data class DashboardUiState(
     val isLoading: Boolean = true,
@@ -28,6 +30,17 @@ class DashboardViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _currentDate = MutableStateFlow(LocalDate.now())
+
+    private val _aiCoachMessage = MutableStateFlow<String?>(null)
+    val aiCoachMessage: StateFlow<String?> = _aiCoachMessage
+
+    private val _isAiLoading = MutableStateFlow(false)
+    val isAiLoading: StateFlow<Boolean> = _isAiLoading
+
+    private val generativeModel = GenerativeModel(
+        modelName = "gemini-flash-latest",
+        apiKey = BuildConfig.GEMINI_API_KEY
+    )
 
     val uiState: StateFlow<DashboardUiState> = combine(
         authRepository.currentUser,
@@ -66,6 +79,47 @@ class DashboardViewModel @Inject constructor(
             val user = authRepository.currentUser.first()
             val uid = user?.id ?: "offline_user_id"
             toggleHabitCompletionUseCase(habitId, uid, _currentDate.value)
+        }
+    }
+
+    fun generateDailyCoachAdvice() {
+        viewModelScope.launch {
+            if (_isAiLoading.value) return@launch
+            _isAiLoading.value = true
+            _aiCoachMessage.value = null
+            
+            try {
+                val user = authRepository.currentUser.first()
+                val uid = user?.id ?: "offline_user_id"
+                val habits = habitRepository.getHabits(uid).first()
+                
+                val habitContext = if (habits.isNotEmpty()) {
+                    "The user is tracking these habits today: " + habits.joinToString(", ") { it.name }
+                } else {
+                    "The user hasn't set up any habits yet."
+                }
+                
+                val prompt = """
+                    You are an expert AI Life Coach, Personal Trainer, and Nutritionist.
+                    $habitContext
+                    
+                    Give the user a highly detailed, actionable daily plan for today. 
+                    Must include:
+                    1. A specific, detailed core/ab workout routine (e.g. 3 sets of X).
+                    2. A specific, healthy meal idea (e.g. breakfast or lunch) with ingredients.
+                    3. A short motivational closing.
+                    
+                    Keep the response concise, punchy, and beautifully formatted using bullet points and emojis. Do not use markdown headers (like # or ##) because the UI font handles that, just use bold text and emojis.
+                """.trimIndent()
+                
+                val response = generativeModel.generateContent(prompt)
+                _aiCoachMessage.value = response.text
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _aiCoachMessage.value = "⚠️ Oops! Your AI Coach hit a snag. Please check your connection or API key and try again."
+            } finally {
+                _isAiLoading.value = false
+            }
         }
     }
 }

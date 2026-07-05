@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,6 +38,8 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val aiMessage by viewModel.aiCoachMessage.collectAsState()
+    val isAiLoading by viewModel.isAiLoading.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -56,6 +59,14 @@ fun DashboardScreen(
                 .padding(padding)
         ) {
             HeaderSection(uiState)
+            
+            AiCoachCard(
+                aiMessage = aiMessage,
+                isLoading = isAiLoading,
+                onGenerateClick = { viewModel.generateDailyCoachAdvice() }
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
             
             if (uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -253,5 +264,94 @@ fun EmptyState() {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
+    }
+}
+
+@Composable
+fun AiCoachCard(
+    aiMessage: String?,
+    isLoading: Boolean,
+    onGenerateClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "AI Coach",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "AI Daily Coach",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.weight(1f)
+                )
+                if (aiMessage == null && !isLoading) {
+                    Button(
+                        onClick = onGenerateClick,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text("Get Plan")
+                    }
+                }
+            }
+
+            if (isLoading) {
+                Spacer(modifier = Modifier.height(16.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(4.dp))
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Analyzing your habits and building a plan...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            } else if (aiMessage != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = aiMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                TextButton(
+                    onClick = onGenerateClick,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Regenerate")
+                }
+            }
+        }
     }
 }
