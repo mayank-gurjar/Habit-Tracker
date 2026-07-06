@@ -6,6 +6,8 @@ import com.habittracker.data.repository.AuthRepositoryImpl
 import com.habittracker.data.repository.HabitRepositoryImpl
 import com.habittracker.domain.repository.AuthRepository
 import com.habittracker.domain.repository.HabitRepository
+import com.habittracker.domain.repository.UserPreferencesRepository
+import com.habittracker.data.repository.UserPreferencesRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -35,4 +37,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindHabitRepository(impl: HabitRepositoryImpl): HabitRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserPreferencesRepository(impl: UserPreferencesRepositoryImpl): UserPreferencesRepository
 }

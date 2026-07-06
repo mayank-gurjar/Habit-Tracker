@@ -13,6 +13,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 import com.google.ai.client.generativeai.GenerativeModel
 import com.habittracker.BuildConfig
+import com.habittracker.domain.repository.UserPreferencesRepository
 
 data class DashboardUiState(
     val isLoading: Boolean = true,
@@ -26,7 +27,8 @@ data class DashboardUiState(
 class DashboardViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val habitRepository: HabitRepository,
-    private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase
+    private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _currentDate = MutableStateFlow(LocalDate.now())
@@ -92,6 +94,7 @@ class DashboardViewModel @Inject constructor(
                 val user = authRepository.currentUser.first()
                 val uid = user?.id ?: "offline_user_id"
                 val habits = habitRepository.getHabits(uid).first()
+                val prefs = userPreferencesRepository.userPreferencesFlow.first()
                 
                 val habitContext = if (habits.isNotEmpty()) {
                     "The user is tracking these habits today: " + habits.joinToString(", ") { it.name }
@@ -101,13 +104,18 @@ class DashboardViewModel @Inject constructor(
                 
                 val prompt = """
                     You are an expert AI Life Coach, Personal Trainer, and Nutritionist.
+                    User Profile:
+                    - Fitness Level: ${prefs.fitnessLevel}
+                    - Dietary Preference: ${prefs.dietaryPreference}
+                    - Primary Goal: ${prefs.primaryGoal}
+                    
                     $habitContext
                     
-                    Give the user a highly detailed, actionable daily plan for today. 
+                    Give the user a highly detailed, actionable daily plan for today, strictly tailored to their profile and habits. 
                     Must include:
-                    1. A specific, detailed core/ab workout routine (e.g. 3 sets of X).
-                    2. A specific, healthy meal idea (e.g. breakfast or lunch) with ingredients.
-                    3. A short motivational closing.
+                    1. A specific, detailed core/ab workout routine (e.g. 3 sets of X) suitable for a ${prefs.fitnessLevel}.
+                    2. A specific, healthy meal idea matching their ${prefs.dietaryPreference} diet.
+                    3. A short motivational closing aligning with their goal of ${prefs.primaryGoal}.
                     
                     Keep the response concise, punchy, and beautifully formatted using bullet points and emojis. Do not use markdown headers (like # or ##) because the UI font handles that, just use bold text and emojis.
                 """.trimIndent()
